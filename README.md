@@ -1,6 +1,6 @@
 # Entregable 1 — API REST de usuarios y mascotas
 
-La interfaz se llama **Patio**. El diseño y sus referencias están documentados en [DISENO.md](DISENO.md).
+Interfaz sencilla en español, sin marca ni logotipos. Incluye dos secciones: Mascotas y Usuarios.
 
 Implementación de «Especificación Entregable 1.docx»: Node.js 18+, Express, JSON con `fs.promises`, contraseñas con `crypto.scrypt`, Multer con `diskStorage` y archivos estáticos. Incluye una interfaz gráfica en español para gestionar ambos recursos desde el navegador. No requiere base de datos ni un proceso de compilación del frontend.
 

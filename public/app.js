@@ -190,7 +190,6 @@ function render() {
     $(`#${kind}-count`).textContent = count;
   }
   $('#collection-title').textContent = isUser ? 'Usuarios' : 'Mascotas';
-  $('#section-number').textContent = isUser ? '02 / REGISTRO DE USUARIOS' : '01 / REGISTRO DE MASCOTAS';
   $('#collection-description').textContent = isUser ? 'Datos de acceso y perfiles registrados.' : 'Especie, edad, sexo y fotografías.';
   $('#add-label').textContent = `Registrar ${singular(resource)}`;
   $('#search').placeholder = isUser ? 'Buscar por nombre, usuario o ID…' : 'Buscar por especie, color o ID…';
@@ -204,7 +203,7 @@ function render() {
   $('#records').classList.toggle('users-records', isUser);
   $('#records').replaceChildren(...(state.loading || !records.length ? [] : isUser ? [usersTable(records)] : records.map(card)));
   $('#empty-state').hidden = state.loading || state.loadError || records.length > 0;
-  $('#empty-title').textContent = term ? 'Sin coincidencias.' : isUser ? 'No hay usuarios registrados.' : 'El archivo está vacío.';
+  $('#empty-title').textContent = term ? 'Sin coincidencias.' : isUser ? 'No hay usuarios registrados.' : 'No hay mascotas registradas.';
   $('#empty-description').textContent = term ? 'Prueba otra búsqueda o borra el texto para ver todos los registros.' : isUser ? 'Registra un usuario con su nombre, contraseña y avatar.' : 'Registra una mascota. Sus datos y fotos aparecerán aquí.';
   $('#empty-add').hidden = Boolean(term);
   $('#empty-add').replaceChildren(document.createTextNode(`Registrar ${isUser ? 'el primer usuario' : 'la primera mascota'}`), icon('arrow'));
