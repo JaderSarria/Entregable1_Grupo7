@@ -13,4 +13,4 @@ Abrir http://localhost:8080. Esta etapa corresponde al backend; la interfaz se i
 
 ## Recursos disponibles
 
-CRUD de `/api/users`: GET, GET por ID, POST, PUT y DELETE. Validaciones, hashing scrypt con salt y avatar con `upload.single('avatar')`. El gestor compartido de recursos se prepara para incorporar mascotas.
+CRUD completos de `/api/users` y `/api/pets`. Mascotas con especie, color, edad y sexo; carga de hasta cinco imágenes por petición con `upload.array('img', 5)`. Respuestas 200, 201, 400, 404 y 500 según el resultado.
