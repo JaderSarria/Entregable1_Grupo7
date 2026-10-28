@@ -7,7 +7,8 @@ Los archivos JSON de esta copia empiezan vacíos. Los registros y las imágenes 
 1. Inicializar servidor Express y persistencia JSON.
 2. Agregar CRUD de usuarios, contraseñas seguras y avatares.
 3. Agregar CRUD de mascotas y carga de imágenes.
+4. Crear primera interfaz para gestionar usuarios y mascotas.
 
 ## Horario asignado
 
-Etapa 3: 28 de octubre de 2026, 16:00 (UTC−05:00).
+Etapa 4: 28 de octubre de 2026, 17:00 (UTC−05:00).

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#b24832">
+  <title>Patio — Registro</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#collection-title">Ir al registro</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Patio, inicio">patio<span aria-hidden="true">*</span></a>
+    <p class="masthead-description">Registro de mascotas<br>y usuarios</p>
+    <span class="edition">ARCHIVO LOCAL / 01</span>
+  </header>
+  <main>
+    <nav class="resource-nav" aria-label="Navegación principal">
+      <button class="nav-item active" type="button" data-resource="pets" aria-current="page"><span class="nav-index">01</span>Mascotas<span id="pets-count" class="nav-count">—</span></button>
+      <button class="nav-item" type="button" data-resource="users"><span class="nav-index">02</span>Usuarios<span id="users-count" class="nav-count">—</span></button>
+    </nav>
+    <section class="collection" aria-labelledby="collection-title">
+      <div class="section-heading"><div><p class="eyebrow" id="section-number">01 / REGISTRO DE MASCOTAS</p><h1 id="collection-title" tabindex="-1">Mascotas</h1><p id="collection-description">Especie, edad, sexo y fotografías.</p></div><button type="button" class="button primary" id="add-record"><span data-icon="plus"></span><span id="add-label">Registrar mascota</span></button></div>
+      <div class="toolbar"><label class="search"><span data-icon="search"></span><input id="search" type="search" aria-label="Buscar registros" placeholder="Buscar por especie, color o ID…" autocomplete="off"></label><button id="refresh" class="button subtle" type="button"><span data-icon="refresh"></span><span>Actualizar</span></button></div>
+      <div id="load-error" class="notice error" role="alert" hidden></div>
+      <p class="results-label" id="results-label" aria-live="polite">Cargando registros…</p>
+      <div id="records" class="records" aria-busy="true"></div>
+      <div id="empty-state" class="empty-state" hidden><div class="empty-drawing" aria-hidden="true"><svg viewBox="0 0 240 190" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M26 158h184M65 153l-3-43 18-34 4-39 24 16 24-3 24 20-9 19-20 4-8 19 26 22 9 20M81 77l23 16M84 38l13 32 11-16M115 72h1M128 91l6-11 17 2M63 112c-27-5-37-25-27-33 3 17 11 19 27 15M76 123l10 32 21 1M119 112l-10 26-1 17h25"/><path d="m176 39 3-11m11 18 10-5m-28 19 11 4" stroke-width="1.5"/></svg></div><h3 id="empty-title">El archivo está vacío.</h3><p id="empty-description">Registra una mascota. Sus datos y fotos aparecerán aquí.</p><button type="button" class="button secondary" id="empty-add">Registrar la primera mascota<span data-icon="arrow"></span></button></div>
+    </section>
+    <footer class="main-footer"><span>Patio / Registro</span><span>Datos guardados en este servidor.</span></footer>
+  </main>
+
+  <dialog id="record-dialog" class="modal" aria-labelledby="form-title">
+    <div class="modal-heading"><div><p class="eyebrow" id="form-eyebrow">NUEVO REGISTRO</p><h2 id="form-title">Registrar mascota</h2></div><button type="button" class="icon-button close-dialog" aria-label="Cerrar formulario"><span data-icon="close"></span></button></div>
+    <form id="record-form">
+      <p class="form-intro">Los campos marcados con * son obligatorios.</p>
+      <div id="user-fields" hidden>
+        <div class="field-row"><label>Nombre *<input name="firstname" maxlength="256" autocomplete="given-name"></label><label>Apellido *<input name="lastname" maxlength="256" autocomplete="family-name"></label></div>
+        <label>Nombre de usuario *<input name="username" maxlength="256" autocomplete="username" spellcheck="false"></label>
+        <label><span id="password-label">Contraseña *</span><input name="password" type="password" maxlength="256" autocomplete="new-password"><span class="field-hint" id="password-hint">Se guardará de forma segura.</span></label>
+        <label class="upload-label">Avatar <span class="optional">Opcional</span><input name="avatar" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><span class="field-hint">Una imagen de hasta 5 MB. Un avatar nuevo reemplaza el anterior.</span></label>
+      </div>
+      <div id="pet-fields">
+        <div class="field-row"><label>Especie *<input name="especie" maxlength="256" placeholder="Ej. perro, gato, conejo" list="species"></label><label>Color *<input name="color" maxlength="256" placeholder="Ej. negro y blanco"></label></div>
+        <div class="field-row"><label>Edad (años) *<input name="edad" type="number" min="0" step="1" placeholder="0"></label><label>Sexo *<select name="sexo"><option value="">Seleccionar</option><option value="macho">Macho</option><option value="hembra">Hembra</option></select></label></div>
+        <label class="upload-label">Fotografías <span class="optional">Opcional</span><input name="img" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif"><span class="field-hint">Hasta 5 imágenes por carga, de máximo 5 MB cada una.</span></label>
+        <label id="image-mode-field" hidden>Actualizar fotografías<select name="imageMode"><option value="append">Conservar las actuales y añadir las nuevas</option><option value="replace">Reemplazar todas por las seleccionadas</option></select><span class="field-hint">Si reemplazas sin seleccionar fotos, se eliminarán las actuales.</span></label>
+      </div>
+      <div id="image-preview" class="image-preview" aria-label="Vista previa de imágenes"></div>
+      <p class="field-hint" id="preview-caption" hidden></p>
+      <div id="form-error" class="notice error" role="alert" hidden></div>
+      <div class="modal-actions"><button type="button" class="button secondary close-dialog">Cancelar</button><button type="submit" class="button primary" id="save-record">Guardar mascota</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="delete-dialog" class="modal small-modal" aria-labelledby="delete-title"><span class="delete-icon" data-icon="trash"></span><h2 id="delete-title">¿Eliminar este registro?</h2><p id="delete-description"></p><div id="delete-error" class="notice error" role="alert" hidden></div><div class="modal-actions"><button type="button" class="button secondary" id="cancel-delete">Conservar registro</button><button type="button" class="button danger" id="confirm-delete">Sí, eliminar</button></div></dialog>
+
+  <dialog id="detail-dialog" class="modal" aria-labelledby="detail-title"><div class="modal-heading"><div><p class="eyebrow" id="detail-eyebrow">DETALLE DEL REGISTRO</p><h2 id="detail-title"></h2></div><button type="button" class="icon-button" id="close-detail" aria-label="Cerrar detalle"><span data-icon="close"></span></button></div><div id="detail-gallery" class="detail-gallery"></div><dl id="detail-fields" class="detail-fields"></dl><div class="modal-actions"><button type="button" class="button primary" id="edit-from-detail">Editar información</button></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <datalist id="species"><option value="perro"><option value="gato"><option value="conejo"><option value="ave"><option value="pez"></datalist>
+</body>
+</html>
