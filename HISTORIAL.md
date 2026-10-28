@@ -9,7 +9,8 @@ Los archivos JSON de esta copia empiezan vacíos. Los registros y las imágenes 
 3. Agregar CRUD de mascotas y carga de imágenes.
 4. Crear primera interfaz para gestionar usuarios y mascotas.
 5. Simplificar navegación y quitar logotipos.
+6. Aplicar paleta oliva y renovar las fichas.
 
 ## Horario asignado
 
-Etapa 5: 28 de octubre de 2026, 17:30 (UTC−05:00).
+Etapa 6: 28 de octubre de 2026, 17:40 (UTC−05:00).
