@@ -1,0 +1,132 @@
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const root = path.resolve(__dirname, '../..');
+
+(async () => {
+  const tempRoot = process.env.TEST_TMP_DIR || require('node:os').tmpdir();
+  await fs.mkdir(tempRoot, { recursive: true });
+  const temp = await fs.mkdtemp(path.join(tempRoot, 'ui-modern-'));
+  const screenshotDir = process.env.UI_SCREENSHOT_DIR || path.join(temp, 'screenshots');
+  await fs.mkdir(screenshotDir, { recursive: true });
+  process.env.TEMP = temp;
+  process.env.TMP = temp;
+  process.env.DATA_DIR = path.join(temp, 'data');
+  process.env.PUBLIC_DIR = path.join(temp, 'public');
+  await fs.cp(path.join(root, 'public'), process.env.PUBLIC_DIR, {
+    recursive: true,
+    filter: source => !source.startsWith(path.join(root, 'public/img') + path.sep)
+  });
+  const { app, initialize } = require(path.join(root, 'src/app'));
+  await initialize();
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  let browser;
+  let checks = 0;
+  const check = (value, message) => { assert.ok(value, message); checks++; };
+  try {
+    browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(base);
+    await page.locator('#empty-state').waitFor({ state: 'visible' });
+    check((await page.locator('#pets-count').textContent()) === '0', 'contador inicial');
+    const form = page.locator('#record-form');
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aL1sAAAAASUVORK5CYII=', 'base64');
+    async function createPet(especie, color, edad, sexo, image = false) {
+      await page.locator('#add-record').click();
+      await form.locator('[name=especie]').fill(especie);
+      await form.locator('[name=color]').fill(color);
+      await form.locator('[name=edad]').fill(String(edad));
+      await form.locator('[name=sexo]').selectOption(sexo);
+      if (image) {
+        await form.locator('[name=img]').setInputFiles({ name: 'prueba.png', mimeType: 'image/png', buffer: png });
+        check(await page.locator('#image-preview img').count() === 1, 'vista previa de carga');
+      }
+      await page.locator('#save-record').click();
+      await page.locator('#record-dialog').waitFor({ state: 'hidden' });
+    }
+    await createPet('perro', 'Negro con manchas blancas', 4, 'macho', true);
+    await createPet('gato', 'Naranja', 2, 'hembra');
+    await createPet('conejo', 'Blanco y gris', 1, 'macho');
+    check(await page.locator('.record-card').count() === 3, 'altas reales desde formularios');
+    await page.locator('#species-filter').selectOption('gato');
+    check(await page.locator('.record-card').count() === 1, 'filtro de especie');
+    await page.locator('#search').fill('no existe');
+    check(await page.locator('#reset-filters').isVisible(), 'estado sin coincidencias');
+    await page.locator('#reset-filters').click();
+    check(await page.locator('.record-card').count() === 3, 'limpieza de filtros');
+    await page.locator('#sort').selectOption('name');
+    check((await page.locator('.card-title').allTextContents()).join(',') === 'conejo,gato,perro', 'orden alfabético');
+    await page.getByRole('button', { name: 'Ver ficha de perro', exact: true }).click();
+    await page.locator('#detail-dialog').waitFor({ state: 'visible' });
+    check(await page.locator('#detail-gallery img').count() === 1, 'galería de detalle');
+    await page.locator('#edit-from-detail').click();
+    await page.locator('#record-dialog').waitFor({ state: 'visible' });
+    check(await form.locator('[name=especie]').inputValue() === 'perro', 'detalle a edición con transición');
+    await form.locator('[name=color]').fill('Negro y blanco');
+    await form.locator('[name=imageMode]').selectOption('replace');
+    await page.locator('#save-record').click();
+    await page.locator('#record-dialog').waitFor({ state: 'hidden' });
+    check((await page.locator('.record-card').filter({ hasText: 'perro' }).textContent()).includes('Negro y blanco'), 'actualización real');
+    await page.getByRole('button', { name: 'Eliminar conejo', exact: true }).click();
+    await page.locator('#cancel-delete').click();
+    await page.locator('#delete-dialog').waitFor({ state: 'hidden' });
+    check(await page.locator('.record-card').count() === 3, 'cancelar borrado');
+    await page.locator('[data-resource=users]').click();
+    await page.locator('#add-record').click();
+    await form.locator('[name=firstname]').fill('Ana');
+    await form.locator('[name=lastname]').fill('Pérez');
+    await form.locator('[name=username]').fill('ana.prueba');
+    await form.locator('[name=password]').fill('clave de prueba');
+    await form.locator('[name=avatar]').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: png });
+    await page.locator('#save-record').click();
+    await page.locator('#record-dialog').waitFor({ state: 'hidden' });
+    check(await page.locator('.users-table tbody tr').count() === 1, 'crear usuario desde navegador');
+    await page.getByRole('button', { name: 'Editar Ana Pérez', exact: true }).click();
+    await form.locator('[name=lastname]').fill('Pérez López');
+    await page.locator('#save-record').click();
+    await page.locator('#record-dialog').waitFor({ state: 'hidden' });
+    check((await page.locator('.users-table').textContent()).includes('Pérez López'), 'editar sin cambiar contraseña');
+    await page.getByRole('button', { name: 'Editar Ana Pérez López', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await page.locator('#record-dialog').waitFor({ state: 'hidden' });
+    check(await page.locator('#record-dialog').isHidden(), 'Escape y salida animada');
+    await page.locator('[data-resource=pets]').click();
+    await page.locator('#close-toast').click();
+    await page.waitForFunction(() => document.getAnimations().every(animation => animation.playState === 'finished'));
+    await page.screenshot({ path: path.join(screenshotDir, 'escritorio.png'), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'sin desbordamiento en móvil');
+    await page.locator('#add-record').click();
+    await form.locator('[name=especie]').fill('ave');
+    await form.locator('[name=color]').fill('Verde');
+    await form.locator('[name=edad]').fill('1');
+    await form.locator('[name=sexo]').selectOption('hembra');
+    await page.locator('#save-record').click();
+    await page.locator('#record-dialog').waitFor({ state: 'hidden' });
+    check(await page.locator('.record-card').count() === 4, 'guardar en pantalla móvil');
+    await page.getByRole('button', { name: 'Eliminar ave', exact: true }).click();
+    await page.locator('#confirm-delete').click();
+    await page.locator('#delete-dialog').waitFor({ state: 'hidden' });
+    check(await page.locator('.record-card').count() === 3, 'confirmación y borrado real');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.waitForFunction(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches && document.getAnimations().length === 0);
+    await page.locator('#add-record').click();
+    await page.waitForFunction(() => document.getAnimations().length === 0);
+    check(await page.evaluate(() => document.getAnimations().length === 0), 'respeta movimiento reducido');
+    await page.keyboard.press('Escape');
+    await page.locator('#record-dialog').waitFor({ state: 'hidden' });
+    await page.screenshot({ path: path.join(screenshotDir, 'movil.png'), fullPage: true });
+    check(errors.length === 0, `sin errores JavaScript: ${errors.join('; ')}`);
+    console.log(`${checks} comprobaciones de frontend superadas en Chromium, escritorio y móvil.`);
+  } finally {
+    if (browser) await browser.close();
+    await new Promise(resolve => server.close(resolve));
+    await fs.rm(temp, { recursive: true, force: true });
+  }
+})().catch(error => { console.error(error); process.exitCode = 1; });

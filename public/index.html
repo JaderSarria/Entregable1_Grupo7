@@ -11,7 +11,7 @@
 </head>
 <body>
   <a class="skip-link" href="#collection-title">Ir al registro</a>
-  <header class="masthead">Administración de usuarios y mascotas</header>
+  <header class="masthead"><div class="masthead-inner"><span class="masthead-title">Administración de usuarios y mascotas</span><span class="sync-label" id="sync-label" role="status">Conectando con el servidor…</span></div></header>
   <main>
     <nav class="resource-nav" aria-label="Navegación principal">
       <button class="nav-item active" type="button" data-resource="pets" aria-current="page">Mascotas<span id="pets-count" class="nav-count">—</span></button>
@@ -19,11 +19,11 @@
     </nav>
     <section class="collection" aria-labelledby="collection-title">
       <div class="section-heading"><div><h1 id="collection-title" tabindex="-1">Mascotas</h1><p id="collection-description">Especie, edad, sexo y fotografías.</p></div><button type="button" class="button primary" id="add-record"><span data-icon="plus"></span><span id="add-label">Registrar mascota</span></button></div>
-      <div class="toolbar"><label class="search"><span data-icon="search"></span><input id="search" type="search" aria-label="Buscar registros" placeholder="Buscar por especie, color o ID…" autocomplete="off"></label><button id="refresh" class="button subtle" type="button"><span data-icon="refresh"></span><span>Actualizar</span></button></div>
+      <div class="toolbar"><label class="search"><span data-icon="search"></span><input id="search" type="search" aria-label="Buscar registros" placeholder="Buscar por especie, color o ID…" autocomplete="off"></label><div class="toolbar-options"><label class="filter-control" id="species-filter-field"><span>Especie</span><select id="species-filter"><option value="">Todas</option></select></label><label class="filter-control"><span>Ordenar</span><select id="sort"><option value="recent">Más recientes</option><option value="oldest">Más antiguos</option><option value="name">Alfabético</option></select></label><button id="refresh" class="button subtle" type="button" aria-label="Actualizar registros"><span data-icon="refresh"></span><span>Actualizar</span></button></div></div>
       <div id="load-error" class="notice error" role="alert" hidden></div>
       <p class="results-label" id="results-label" aria-live="polite">Cargando registros…</p>
       <div id="records" class="records" aria-busy="true"></div>
-      <div id="empty-state" class="empty-state" hidden><h3 id="empty-title">No hay mascotas registradas.</h3><p id="empty-description">Registra una mascota. Sus datos y fotos aparecerán aquí.</p><button type="button" class="button secondary" id="empty-add">Registrar la primera mascota<span data-icon="arrow"></span></button></div>
+      <div id="empty-state" class="empty-state" hidden><span class="empty-symbol" data-icon="search" aria-hidden="true"></span><h3 id="empty-title">No hay mascotas registradas.</h3><p id="empty-description">Registra una mascota. Sus datos y fotos aparecerán aquí.</p><button type="button" class="button secondary" id="empty-add">Registrar la primera mascota<span data-icon="arrow"></span></button><button type="button" class="button secondary" id="reset-filters" hidden>Limpiar filtros</button></div>
     </section>
     
   </main>
@@ -54,7 +54,7 @@
   <dialog id="delete-dialog" class="modal small-modal" aria-labelledby="delete-title"><span class="delete-icon" data-icon="trash"></span><h2 id="delete-title">¿Eliminar este registro?</h2><p id="delete-description"></p><div id="delete-error" class="notice error" role="alert" hidden></div><div class="modal-actions"><button type="button" class="button secondary" id="cancel-delete">Conservar registro</button><button type="button" class="button danger" id="confirm-delete">Sí, eliminar</button></div></dialog>
 
   <dialog id="detail-dialog" class="modal" aria-labelledby="detail-title"><div class="modal-heading"><div><p class="eyebrow" id="detail-eyebrow">DETALLE DEL REGISTRO</p><h2 id="detail-title"></h2></div><button type="button" class="icon-button" id="close-detail" aria-label="Cerrar detalle"><span data-icon="close"></span></button></div><div id="detail-gallery" class="detail-gallery"></div><dl id="detail-fields" class="detail-fields"></dl><div class="modal-actions"><button type="button" class="button primary" id="edit-from-detail">Editar información</button></div></dialog>
-  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden><span class="toast-icon" data-icon="check" aria-hidden="true"></span><span id="toast-message"></span><button type="button" id="close-toast" class="icon-button" aria-label="Cerrar notificación"><span data-icon="close"></span></button></div>
   <datalist id="species"><option value="perro"><option value="gato"><option value="conejo"><option value="ave"><option value="pez"></datalist>
 </body>
 </html>
