@@ -11,7 +11,8 @@ Los archivos JSON de esta copia empiezan vacíos. Los registros y las imágenes 
 5. Simplificar navegación y quitar logotipos.
 6. Aplicar paleta oliva y renovar las fichas.
 7. Agregar filtros, ordenación y diseño adaptable.
+8. Añadir animaciones y transiciones a la interfaz.
 
 ## Horario asignado
 
-Etapa 7: 28 de octubre de 2026, 18:40 (UTC−05:00).
+Etapa 8: 28 de octubre de 2026, 19:20 (UTC−05:00).

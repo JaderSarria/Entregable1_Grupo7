@@ -32,6 +32,7 @@ const deleteDialog = $('#delete-dialog');
 const detailDialog = $('#detail-dialog');
 let previewUrls = [];
 let toastTimer;
+let toastVersion = 0;
 const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 const activeAnimations = new Set();
 const closingDialogs = new WeakMap();
@@ -49,7 +50,8 @@ motionPreference.addEventListener?.('change', event => {
 function openModal(modal) {
   if (modal.open || closingDialogs.has(modal)) return;
   modal.showModal();
-  animate(modal, [{ opacity: 0, transform: 'translateY(14px) scale(.98)' }, { opacity: 1, transform: 'none' }]);
+  animate(modal, [{ opacity: 0, transform: 'translateY(28px) scale(.95)' }, { opacity: 1, transform: 'translateY(-3px) scale(1.005)', offset: .8 }, { opacity: 1, transform: 'none' }], { duration: 360 });
+  [...modal.querySelectorAll('form>div:not([hidden]), .detail-fields>div, .modal-actions')].slice(0, 12).forEach((element, i) => animate(element, [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { duration: 280, delay: 70 + Math.min(i * 30, 150) }));
 }
 async function closeModal(modal) {
   if (!modal.open) return;
@@ -68,9 +70,54 @@ async function closeModal(modal) {
 }
 function revealRecords() {
   const records = [...$('#records').querySelectorAll('.record-card, tbody tr')];
-  records.slice(0, 16).forEach((element, i) => animate(element, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 280, delay: Math.min(i * 28, 140) }));
+  records.slice(0, 16).forEach((element, i) => animate(element, [{ opacity: 0, transform: 'translateY(24px) scale(.96)' }, { opacity: 1, transform: 'translateY(-2px) scale(1.005)', offset: .8 }, { opacity: 1, transform: 'none' }], { duration: 420, delay: Math.min(i * 45, 225) }));
   if (!$('#empty-state').hidden) animate($('#empty-state'), [{ opacity: 0 }, { opacity: 1 }]);
 }
+const navHighlight = node('span', 'nav-highlight');
+navHighlight.setAttribute('aria-hidden', 'true');
+$('.resource-nav').prepend(navHighlight);
+function positionNav() {
+  const active = $('.nav-item.active');
+  if (!active) return;
+  navHighlight.style.width = `${active.offsetWidth}px`;
+  navHighlight.style.height = `${active.offsetHeight}px`;
+  navHighlight.style.transform = `translateX(${active.offsetLeft}px)`;
+}
+if (window.ResizeObserver) new ResizeObserver(positionNav).observe($('.resource-nav'));
+else window.addEventListener('resize', positionNav);
+
+function recordPositions() {
+  if (motionPreference.matches) return new Map();
+  const nodes = [...$('#records').querySelectorAll('[data-record-key]')].slice(0, 80);
+  nodes.forEach(element => element.getAnimations().forEach(animation => animation.cancel()));
+  return new Map(nodes.map(element => [element.dataset.recordKey, element.getBoundingClientRect()]));
+}
+function moveRecords(previous) {
+  if (!previous.size || motionPreference.matches) return;
+  [...$('#records').querySelectorAll('[data-record-key]')].slice(0, 80).forEach((element, i) => {
+    const before = previous.get(element.dataset.recordKey);
+    const after = element.getBoundingClientRect();
+    if (before) {
+      const x = before.left - after.left, y = before.top - after.top;
+      if (Math.abs(x) > 1 || Math.abs(y) > 1) animate(element, [{ transform: `translate(${x}px, ${y}px)` }, { transform: 'none' }], { duration: 360 });
+    } else {
+      animate(element, [{ opacity: 0, transform: 'translateY(16px) scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: Math.min(i * 25, 100) });
+    }
+  });
+}
+document.addEventListener('pointerdown', event => {
+  if (motionPreference.matches) return;
+  const button = event.target.closest('.button, .icon-button, .nav-item');
+  if (!button || button.disabled) return;
+  const box = button.getBoundingClientRect();
+  const wave = node('span', 'button-wave');
+  wave.setAttribute('aria-hidden', 'true');
+  const size = Math.max(box.width, box.height) * 2;
+  Object.assign(wave.style, { width: `${size}px`, height: `${size}px`, left: `${event.clientX - box.left - size / 2}px`, top: `${event.clientY - box.top - size / 2}px` });
+  button.append(wave);
+  const animation = animate(wave, [{ opacity: .22, transform: 'scale(0)' }, { opacity: 0, transform: 'scale(1)' }], { duration: 520 });
+  if (animation) animation.finished.catch(() => {}).finally(() => wave.remove()); else wave.remove();
+});
 function skeletons() {
   return Array.from({ length: state.resource === 'pets' ? 3 : 2 }, () => {
     const skeleton = node('div', `skeleton ${state.resource === 'users' ? 'skeleton-row' : ''}`);
@@ -104,14 +151,26 @@ function showError(selector, message) {
   const element = $(selector);
   element.textContent = message;
   element.hidden = !message;
+  if (message) animate(element, [{ opacity: 0, transform: 'translateX(0)' }, { opacity: 1, transform: 'translateX(-5px)', offset: .25 }, { transform: 'translateX(4px)', offset: .55 }, { transform: 'translateX(0)' }], { duration: 300 });
 }
 
 function notify(message) {
   clearTimeout(toastTimer);
+  const version = ++toastVersion;
+  $('#toast').getAnimations().forEach(animation => animation.cancel());
   $('#toast-message').textContent = message;
   $('#toast').hidden = false;
-  animate($('#toast'), [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }]);
-  toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 4500);
+  animate($('#toast'), [{ opacity: 0, translate: '0 24px', scale: '.96' }, { opacity: 1, translate: '0 -3px', scale: '1.01', offset: .8 }, { opacity: 1, translate: '0 0', scale: '1' }], { duration: 360 });
+  animate($('.toast-icon'), [{ transform: 'rotate(-45deg) scale(.6)' }, { transform: 'rotate(0) scale(1)' }], { duration: 380 });
+  toastTimer = setTimeout(() => { void dismissToast(version); }, 4500);
+}
+async function dismissToast(version = toastVersion) {
+  clearTimeout(toastTimer);
+  const toast = $('#toast');
+  if (toast.hidden) return;
+  const animation = animate(toast, [{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: '0 14px' }], { duration: 150 });
+  if (animation) await animation.finished.catch(() => {});
+  if (version === toastVersion) toast.hidden = true;
 }
 
 async function load() {
@@ -165,6 +224,7 @@ function card(record) {
   const isUser = resource === 'users';
   const name = recordName(record, resource);
   const article = node('article', `record-card ${isUser ? 'user-card' : ''}`);
+  article.dataset.recordKey = `${resource}-${record.id}`;
   const media = node('div', 'card-media');
   const image = imageElement(isUser ? record.avatar : record.img?.[0], isUser ? `Avatar de ${name}` : `Fotografía de ${name}`);
   if (image) media.append(image);
@@ -219,6 +279,7 @@ function usersTable(records) {
   const body = node('tbody');
   for (const record of records) {
     const row = node('tr');
+    row.dataset.recordKey = `users-${record.id}`;
     const name = recordName(record, 'users');
     row.append(node('td', 'user-id', String(record.id).padStart(3, '0')));
     const identityCell = node('th');
@@ -260,6 +321,7 @@ function updateSpecies() {
 }
 
 function render() {
+  const previousPositions = recordPositions();
   const resource = state.resource;
   const isUser = resource === 'users';
   const term = normalized($('#search').value.trim());
@@ -285,6 +347,7 @@ function render() {
     button.classList.toggle('active', active);
     if (active) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
   });
+  positionNav();
   $('#records').setAttribute('aria-busy', String(state.loading));
   $('#records').classList.toggle('users-records', isUser);
   $('#records').replaceChildren(...(state.loading ? skeletons() : !records.length ? [] : isUser ? [usersTable(records)] : records.map(card)));
@@ -295,6 +358,7 @@ function render() {
   $('#reset-filters').hidden = !filtered;
   $('#empty-add').replaceChildren(document.createTextNode(`Registrar ${isUser ? 'el primer usuario' : 'la primera mascota'}`), icon('arrow'));
   $('#results-label').textContent = state.loading ? 'Cargando registros…' : state.loadError ? 'No se pudo actualizar el directorio.' : `${records.length} ${isUser ? (records.length === 1 ? 'usuario' : 'usuarios') : (records.length === 1 ? 'mascota' : 'mascotas')}${filtered ? ` de ${state[resource].length} registros` : ' en el directorio'}`;
+  moveRecords(previousPositions);
 }
 
 function revokePreviews() {
@@ -325,7 +389,7 @@ function renderPreview() {
     }
   }
   $('#image-preview').replaceChildren(...images);
-  if (files.length) images.forEach((image, i) => animate(image, [{ opacity: 0, transform: 'scale(.93)' }, { opacity: 1, transform: 'scale(1)' }], { delay: i * 25, duration: 170 }));
+  if (files.length) images.forEach((image, i) => animate(image, [{ opacity: 0, transform: 'translateY(12px) rotate(-4deg) scale(.85)' }, { opacity: 1, transform: 'none' }], { delay: i * 45, duration: 320 }));
   $('#preview-caption').hidden = !images.length;
   $('#preview-caption').textContent = files.length ? 'Vista previa de los archivos seleccionados.' : 'Imágenes guardadas actualmente.';
 }
@@ -422,11 +486,13 @@ $('#confirm-delete').addEventListener('click', async () => {
   try {
     await api(`/api/${resource}/${id}`, { method: 'DELETE' });
     state.lastSync = new Date();
-    state[resource] = state[resource].filter(record => record.id !== id);
     await closeModal(deleteDialog);
+    const removedElement = [...$('#records').querySelectorAll('[data-record-key]')].find(element => element.dataset.recordKey === `${resource}-${id}`);
+    const exit = animate(removedElement, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(12px) scale(.94)' }], { duration: 180 });
+    if (exit) await exit.finished.catch(() => {});
+    state[resource] = state[resource].filter(record => record.id !== id);
     updateSpecies();
     render();
-    revealRecords();
     notify('Registro eliminado correctamente.');
   } catch (error) { showError('#delete-error', error.message); }
   finally {
@@ -463,6 +529,7 @@ function openDetail(record) {
     return row;
   }));
   openModal(detailDialog);
+  [...gallery.children].forEach((element, i) => animate(element, [{ opacity: 0, transform: 'translateX(22px) scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 360, delay: Math.min(i * 60, 240) }));
 }
 
 document.querySelectorAll('[data-resource]').forEach(button => button.addEventListener('click', () => {
@@ -471,7 +538,8 @@ document.querySelectorAll('[data-resource]').forEach(button => button.addEventLi
   $('#search').value = '';
   render();
   revealRecords();
-  animate($('#collection-title'), [{ opacity: 0, transform: 'translateY(5px)' }, { opacity: 1, transform: 'none' }]);
+  const direction = state.resource === 'users' ? 1 : -1;
+  animate($('.section-heading'), [{ opacity: 0, transform: `translateX(${direction * 24}px)` }, { opacity: 1, transform: 'none' }], { duration: 320 });
 }));
 $('#search').addEventListener('input', render);
 $('#refresh').addEventListener('click', load);
@@ -494,8 +562,8 @@ $('#edit-from-detail').addEventListener('click', async () => {
   openForm(record);
 });
 detailDialog.addEventListener('close', () => { state.detail = null; });
-$('#sort').addEventListener('change', () => { render(); revealRecords(); });
-$('#species-filter').addEventListener('change', () => { render(); revealRecords(); });
+$('#sort').addEventListener('change', render);
+$('#species-filter').addEventListener('change', render);
 $('#reset-filters').addEventListener('click', () => {
   $('#search').value = '';
   $('#species-filter').value = '';
@@ -503,5 +571,7 @@ $('#reset-filters').addEventListener('click', () => {
   revealRecords();
   $('#search').focus();
 });
-$('#close-toast').addEventListener('click', () => { clearTimeout(toastTimer); $('#toast').hidden = true; });
+$('#close-toast').addEventListener('click', () => { void dismissToast(); });
+animate($('.masthead-inner'), [{ opacity: 0, translate: '0 -12px' }, { opacity: 1, translate: '0 0' }], { duration: 440 });
+animate($('.resource-nav'), [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { duration: 420, delay: 70 });
 load();
