@@ -13,4 +13,4 @@ Abrir http://localhost:8080. Esta etapa corresponde al backend; la interfaz se i
 
 ## Recursos disponibles
 
-Base del servidor, manejo de errores, datos JSON y preparación de carpetas para imágenes.
+CRUD de `/api/users`: GET, GET por ID, POST, PUT y DELETE. Validaciones, hashing scrypt con salt y avatar con `upload.single('avatar')`. El gestor compartido de recursos se prepara para incorporar mascotas.

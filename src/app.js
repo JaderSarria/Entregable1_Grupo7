@@ -6,6 +6,7 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: false, limit: '100kb' }));
 app.use(express.static(publicDir, { dotfiles: 'deny' }));
+app.use('/api/users', require('./routes/users.router'));
 app.get('/', (req, res) => res.json({ proyecto: 'Entregable 1', mensaje: 'API REST en desarrollo' }));
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 app.use((error, req, res, next) => {
