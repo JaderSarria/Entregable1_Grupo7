@@ -26,6 +26,8 @@ Abrir **http://localhost:8080** para usar la interfaz gráfica. Se puede definir
 
 La pantalla se comunica con la API mediante peticiones HTTP reales y formularios multipart. Los datos se guardan en los JSON del servidor. Incluye vistas vacías, validaciones, vistas previas, avisos de guardado, mensajes de error y diseño adaptable a móviles. No depende de fuentes, imágenes o servicios externos.
 
+Al final de la pantalla aparece **Actividad de la API**, un apartado discreto cerrado por defecto. Al desplegarlo se ven las últimas 40 peticiones de esta pestaña: método, ruta, código HTTP, duración y hora. Cada fila muestra los datos enviados y la respuesta JSON. Las contraseñas y credenciales se ocultan; de los archivos solo se muestran nombre, tipo y tamaño. **Limpiar actividad** vacía el panel. El registro se mantiene en memoria y se reinicia al recargar la página.
+
 La cabecera incluye una fotografía editorial y un fondo de contornos dibujado con Canvas 2D, que responde suavemente al puntero y queda estático con movimiento reducido. El resumen muestra el total real de mascotas, usuarios y fotografías guardadas (incluidos los avatares). Los perros, gatos y conejos sin foto propia muestran una **imagen de referencia** identificada; no se guarda como foto del registro y nunca sustituye una fotografía cargada. Las cuatro imágenes están incluidas en `public/assets` en formato WebP y suman menos de 400 KB.
 
 La versión actual incorpora filtro de mascotas por especie, ordenación por antigüedad o alfabética, indicador deslizante entre secciones, entrada escalonada de fichas y desplazamiento de estas al reordenar o filtrar. Los formularios se abren con un pequeño rebote, sus campos aparecen por etapas y las fichas tienen una salida animada al eliminarlas. También hay ondas al pulsar botones, transiciones en fotografías y vistas previas, indicadores de carga y avisos con entrada y salida animadas. Las preferencias de movimiento reducido del dispositivo se respetan tanto en CSS como en JavaScript.
@@ -41,6 +43,7 @@ public/index.html
 public/styles.css
 public/editorial.css
 public/app.js
+public/api-monitor.js
 public/visuals.js
 public/assets/companeros.webp
 public/assets/perro.webp
@@ -60,6 +63,7 @@ test/api.test.js
 test/helpers/in-process.cjs
 test/run-in-process.cjs
 test/browser/ui.e2e.cjs
+test/browser/api-monitor.e2e.cjs
 package.json
 package-lock.json
 README.md
@@ -133,6 +137,8 @@ npm run test:ui
 ```
 
 El archivo `test/browser/ui.e2e.cjs` inicia su propio servidor y prueba altas y edición, cargas con vista previa, filtros, ordenación animada, detalle a edición, cancelación y confirmación de borrado, Escape, ausencia de desbordamiento a 320, 390 y 768 px y movimiento reducido. También comprueba las fotografías locales, la prioridad de las fotos cargadas frente a las referencias, los contadores reales, el dibujo de canvas y que este permanezca estático con movimiento reducido. No hay solicitudes a servicios externos. Los registros e imágenes del proyecto se conservan. Se puede definir `TEST_TMP_DIR` para el directorio temporal y `UI_SCREENSHOT_DIR` para guardar capturas; `PLAYWRIGHT_MODULE` permite usar una instalación externa de Playwright.
+
+El panel de API tiene una comprobación adicional de navegador, que se puede ejecutar con `node test/browser/api-monitor.e2e.cjs` después de instalar Playwright siguiendo las instrucciones anteriores. Comprueba peticiones reales, errores, ocultación de credenciales, archivos multipart, limpieza y límite de entradas y tamaños de pantalla de 320, 390 y 768 px. Utiliza datos temporales.
 
 ## Persistencia y alcance
 
