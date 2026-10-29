@@ -6,7 +6,9 @@
     "node": ">=18"
   },
   "scripts": {
-    "start": "node src/app.js"
+    "start": "node src/app.js",
+    "test": "node --test test/api.test.js",
+    "test:in-process": "node test/run-in-process.cjs"
   },
   "dependencies": {
     "express": "4.21.2",

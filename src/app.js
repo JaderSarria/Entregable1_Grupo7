@@ -8,7 +8,6 @@ app.use(express.urlencoded({ extended: false, limit: '100kb' }));
 app.use(express.static(publicDir, { dotfiles: 'deny' }));
 app.use('/api/users', require('./routes/users.router'));
 app.use('/api/pets', require('./routes/pets.router'));
-app.get('/', (req, res) => res.json({ proyecto: 'Entregable 1', mensaje: 'API REST en desarrollo' }));
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 app.use((error, req, res, next) => {
   const status = error instanceof multer.MulterError || error.type === 'entity.parse.failed' || error.type === 'entity.too.large' ? 400 : (error.status || 500);
