@@ -9,3 +9,4 @@ Los archivos JSON de esta copia empiezan vacíos. Los registros y las imágenes 
 3. Agregar CRUD de mascotas y carga de imágenes.
 4. Crear primera interfaz para gestionar usuarios y mascotas.
 5. Simplificar navegación y quitar logotipos.
+6. Aplicar paleta oliva y renovar las fichas.

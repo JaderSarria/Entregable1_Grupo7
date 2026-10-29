@@ -122,12 +122,16 @@ function card(record) {
   media.append(node('span', 'record-id', `ID ${String(record.id).padStart(2, '0')}`));
   if (!isUser && record.img?.length) media.append(node('span', 'image-count', `${record.img.length} ${record.img.length === 1 ? 'foto' : 'fotos'}`));
   const body = node('div', 'card-body');
-  body.append(node('h3', 'card-title', name), node('p', 'card-subtitle', isUser ? `@${record.username}` : record.color));
-  const tags = node('div', 'card-tags');
-  if (isUser) tags.append(node('span', 'tag', 'Usuario registrado'));
-  else tags.append(node('span', 'tag', `${record.edad} ${record.edad === 1 ? 'año' : 'años'}`), node('span', 'tag', record.sexo));
+  body.append(node('h3', 'card-title', name));
+  const info = node('dl', 'card-info');
+  const fields = isUser ? [['Usuario', `@${record.username}`]] : [['Edad', `${record.edad} ${record.edad === 1 ? 'año' : 'años'}`], ['Sexo', record.sexo], ['Color', record.color]];
+  for (const [label, value] of fields) {
+    const field = node('div', label === 'Color' ? 'card-field wide' : 'card-field');
+    field.append(node('dt', '', label), node('dd', '', value));
+    info.append(field);
+  }
   const actions = node('div', 'card-actions');
-  const view = node('button', 'button view-button', 'Abrir ficha');
+  const view = node('button', 'button view-button', 'Ver ficha');
   view.type = 'button';
   view.setAttribute('aria-label', `Ver detalles de ${name}`);
   view.append(icon('arrow'));
@@ -135,7 +139,7 @@ function card(record) {
   const edit = actionButton(`Editar ${name}`, 'edit', 'icon-button text-action', () => openForm(record));
   edit.append(node('span', '', 'Editar'));
   actions.append(view, edit, actionButton(`Eliminar ${name}`, 'trash', 'icon-button delete-button', () => openDelete(record)));
-  body.append(tags, actions);
+  body.append(info, actions);
   article.append(media, body);
   return article;
 }
