@@ -12,3 +12,4 @@ Los archivos JSON de esta copia empiezan vacíos. Los registros y las imágenes 
 6. Aplicar paleta oliva y renovar las fichas.
 7. Agregar filtros, ordenación y diseño adaptable.
 8. Añadir animaciones y transiciones a la interfaz.
+9. Incorporar fotografías, canvas y acabado visual.

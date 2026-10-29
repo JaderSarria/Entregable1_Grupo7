@@ -7,25 +7,39 @@
   <title>Usuarios y mascotas</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E">
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/editorial.css">
   <script src="/app.js" defer></script>
+  <script src="/visuals.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#collection-title">Ir al registro</a>
-  <header class="masthead"><div class="masthead-inner"><span class="masthead-title">Administración de usuarios y mascotas</span><span class="sync-label" id="sync-label" role="status">Conectando con el servidor…</span></div></header>
+  <header class="masthead"><div class="masthead-inner"><span class="masthead-title">Usuarios <span class="masthead-amp">&</span> mascotas<span class="masthead-subtitle">Tu directorio personal</span></span><div class="masthead-meta"><span id="today-label" class="today-label"></span><span class="sync-label" id="sync-label" role="status">Conectando con el servidor…</span></div></div></header>
   <main>
+    <section class="welcome" aria-labelledby="welcome-title">
+      <div class="welcome-copy">
+        <canvas id="welcome-canvas" aria-hidden="true"></canvas>
+        <div class="welcome-content"><p class="welcome-kicker">UN ESPACIO PARA TUS COMPAÑEROS</p><h2 id="welcome-title">Cada compañero,<br><em>en su lugar.</em></h2><p class="welcome-description">Guarda sus datos, organiza sus fotos y encuentra cada ficha en un instante.</p>
+          <div class="welcome-actions"><a class="button primary" href="#collection-title" id="explore-records">Explorar fichas<span data-icon="arrow"></span></a><span class="welcome-note">Lo importante, siempre a mano.</span></div>
+          <dl class="directory-stats" aria-label="Resumen del directorio"><div><dd id="stat-pets">—</dd><dt>Mascotas</dt></div><div><dd id="stat-users">—</dd><dt>Usuarios</dt></div><div><dd id="stat-photos">—</dd><dt>Fotos guardadas</dt></div></dl>
+        </div>
+      </div>
+      <figure class="welcome-photo"><img src="/assets/companeros.webp" alt="Un perro y un gato juntos en casa, imagen decorativa de referencia" width="1536" height="1024" fetchpriority="high"><figcaption>Imagen de referencia</figcaption><span class="photo-corner" aria-hidden="true">En buena compañía.</span></figure>
+    </section>
+    <div class="workspace-bar"><span class="workspace-label">TU DIRECTORIO</span>
     <nav class="resource-nav" aria-label="Navegación principal">
       <button class="nav-item active" type="button" data-resource="pets" aria-current="page">Mascotas<span id="pets-count" class="nav-count">—</span></button>
       <button class="nav-item" type="button" data-resource="users">Usuarios<span id="users-count" class="nav-count">—</span></button>
     </nav>
+    </div>
     <section class="collection" aria-labelledby="collection-title">
       <div class="section-heading"><div><h1 id="collection-title" tabindex="-1">Mascotas</h1><p id="collection-description">Especie, edad, sexo y fotografías.</p></div><button type="button" class="button primary" id="add-record"><span data-icon="plus"></span><span id="add-label">Registrar mascota</span></button></div>
       <div class="toolbar"><label class="search"><span data-icon="search"></span><input id="search" type="search" aria-label="Buscar registros" placeholder="Buscar por especie, color o ID…" autocomplete="off"></label><div class="toolbar-options"><label class="filter-control" id="species-filter-field"><span>Especie</span><select id="species-filter"><option value="">Todas</option></select></label><label class="filter-control"><span>Ordenar</span><select id="sort"><option value="recent">Más recientes</option><option value="oldest">Más antiguos</option><option value="name">Alfabético</option></select></label><button id="refresh" class="button subtle" type="button" aria-label="Actualizar registros"><span data-icon="refresh"></span><span>Actualizar</span></button></div></div>
       <div id="load-error" class="notice error" role="alert" hidden></div>
-      <p class="results-label" id="results-label" aria-live="polite">Cargando registros…</p>
+      <div class="results-header"><p class="results-label" id="results-label" aria-live="polite">Cargando registros…</p><span class="view-label"><span data-icon="camera"></span>Fichas y fotografías</span></div>
       <div id="records" class="records" aria-busy="true"></div>
       <div id="empty-state" class="empty-state" hidden><span class="empty-symbol" data-icon="search" aria-hidden="true"></span><h3 id="empty-title">No hay mascotas registradas.</h3><p id="empty-description">Registra una mascota. Sus datos y fotos aparecerán aquí.</p><button type="button" class="button secondary" id="empty-add">Registrar la primera mascota<span data-icon="arrow"></span></button><button type="button" class="button secondary" id="reset-filters" hidden>Limpiar filtros</button></div>
     </section>
-    
+    <footer class="page-footer"><span>Un espacio para ellos. Todo en orden para ti.</span><a href="#welcome-title">Volver arriba<span data-icon="arrow"></span></a></footer>
   </main>
 
   <dialog id="record-dialog" class="modal" aria-labelledby="form-title">
