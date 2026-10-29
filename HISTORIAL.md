@@ -6,3 +6,4 @@ Los archivos JSON de esta copia empiezan vacíos. Los registros y las imágenes 
 
 1. Inicializar servidor Express y persistencia JSON.
 2. Agregar CRUD de usuarios, contraseñas seguras y avatares.
+3. Agregar CRUD de mascotas y carga de imágenes.
