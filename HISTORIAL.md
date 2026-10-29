@@ -8,3 +8,4 @@ Los archivos JSON de esta copia empiezan vacíos. Los registros y las imágenes 
 2. Agregar CRUD de usuarios, contraseñas seguras y avatares.
 3. Agregar CRUD de mascotas y carga de imágenes.
 4. Crear primera interfaz para gestionar usuarios y mascotas.
+5. Simplificar navegación y quitar logotipos.
