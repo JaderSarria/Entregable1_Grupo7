@@ -1,6 +1,8 @@
 'use strict';
 
 const icons = {
+  check: '<path d="m5 12 4 4L19 6"/>',
+  camera: '<path d="M4 6h4l2-3h4l2 3h4v14H4Z"/><circle cx="12" cy="12" r="4"/>',
   paw: '<ellipse cx="8" cy="6" rx="2" ry="3"/><ellipse cx="16" cy="6" rx="2" ry="3"/><ellipse cx="3.7" cy="11" rx="1.7" ry="2.5" transform="rotate(-25 3.7 11)"/><ellipse cx="20.3" cy="11" rx="1.7" ry="2.5" transform="rotate(25 20.3 11)"/><path d="M6 18c0-3 3-7 6-7s6 4 6 7c0 4-4 2-6 2s-6 2-6-2Z"/>',
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/><circle cx="9" cy="7" r="4"/>',
   heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0l-1 1-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
@@ -23,13 +25,60 @@ function icon(name) {
 }
 document.querySelectorAll('[data-icon]').forEach(element => element.replaceChildren(icon(element.dataset.icon)));
 
-const state = { resource: 'pets', users: [], pets: [], loading: true, loadError: false, editing: null, deleting: null, detail: null, busy: false };
+const state = { resource: 'pets', users: [], pets: [], loading: true, loadError: false, editing: null, deleting: null, detail: null, busy: false, lastSync: null };
 const form = $('#record-form');
 const dialog = $('#record-dialog');
 const deleteDialog = $('#delete-dialog');
 const detailDialog = $('#detail-dialog');
 let previewUrls = [];
 let toastTimer;
+const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+const activeAnimations = new Set();
+const closingDialogs = new WeakMap();
+const ease = 'cubic-bezier(.2,.8,.2,1)';
+function animate(element, frames, options = {}) {
+  if (!element || !element.animate || motionPreference.matches || document.hidden) return null;
+  const animation = element.animate(frames, { duration: 240, easing: ease, ...options });
+  activeAnimations.add(animation);
+  animation.finished.catch(() => {}).finally(() => activeAnimations.delete(animation));
+  return animation;
+}
+motionPreference.addEventListener?.('change', event => {
+  if (event.matches) activeAnimations.forEach(animation => animation.cancel());
+});
+function openModal(modal) {
+  if (modal.open || closingDialogs.has(modal)) return;
+  modal.showModal();
+  animate(modal, [{ opacity: 0, transform: 'translateY(14px) scale(.98)' }, { opacity: 1, transform: 'none' }]);
+}
+async function closeModal(modal) {
+  if (!modal.open) return;
+  if (closingDialogs.has(modal)) return closingDialogs.get(modal);
+  const task = (async () => {
+    const animation = animate(modal, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(7px) scale(.99)' }], { duration: 130 });
+    if (animation) await animation.finished.catch(() => {});
+    if (modal.open) {
+      const closed = new Promise(resolve => modal.addEventListener('close', resolve, { once: true }));
+      modal.close();
+      await closed;
+    }
+  })();
+  closingDialogs.set(modal, task);
+  try { await task; } finally { closingDialogs.delete(modal); }
+}
+function revealRecords() {
+  const records = [...$('#records').querySelectorAll('.record-card, tbody tr')];
+  records.slice(0, 16).forEach((element, i) => animate(element, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 280, delay: Math.min(i * 28, 140) }));
+  if (!$('#empty-state').hidden) animate($('#empty-state'), [{ opacity: 0 }, { opacity: 1 }]);
+}
+function skeletons() {
+  return Array.from({ length: state.resource === 'pets' ? 3 : 2 }, () => {
+    const skeleton = node('div', `skeleton ${state.resource === 'users' ? 'skeleton-row' : ''}`);
+    skeleton.setAttribute('aria-hidden', 'true');
+    skeleton.append(node('div', 'skeleton-photo'), node('div', 'skeleton-line'), node('div', 'skeleton-line short'));
+    return skeleton;
+  });
+}
 const singular = resource => resource === 'users' ? 'usuario' : 'mascota';
 const recordName = (record, resource) => resource === 'users' ? `${record.firstname} ${record.lastname}` : record.especie;
 const normalized = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -59,8 +108,9 @@ function showError(selector, message) {
 
 function notify(message) {
   clearTimeout(toastTimer);
-  $('#toast').textContent = message;
+  $('#toast-message').textContent = message;
   $('#toast').hidden = false;
+  animate($('#toast'), [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }]);
   toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 4500);
 }
 
@@ -75,6 +125,8 @@ async function load() {
     if (!Array.isArray(users) || !Array.isArray(pets)) throw new Error('No se pudo leer el directorio.');
     state.users = users;
     state.pets = pets;
+    state.lastSync = new Date();
+    updateSpecies();
   } catch (error) {
     state.loadError = true;
     showError('#load-error', `${error.message} Pulsa Actualizar para volver a intentar.`);
@@ -82,6 +134,7 @@ async function load() {
     state.loading = false;
     $('#refresh').disabled = false;
     render();
+    revealRecords();
   }
 }
 
@@ -91,6 +144,8 @@ function imageElement(url, alt) {
   image.src = url;
   image.alt = alt;
   image.loading = 'lazy';
+  image.decoding = 'async';
+  image.addEventListener('load', () => image.classList.add('is-loaded'), { once: true });
   image.addEventListener('error', () => { image.replaceWith(node('span', 'field-hint', 'Imagen no disponible')); });
   return image;
 }
@@ -116,13 +171,19 @@ function card(record) {
   else if (isUser) media.append(node('span', 'initials', `${record.firstname.slice(0, 1)}${record.lastname.slice(0, 1)}`.toUpperCase()));
   else {
     const placeholder = node('div', 'photo-placeholder');
-    placeholder.append(node('span', 'photo-number', String(record.id).padStart(3, '0')), node('span', '', 'Sin fotografía'));
+    placeholder.append(icon('camera'), node('span', '', 'Sin fotografía'));
     media.append(placeholder);
   }
   media.append(node('span', 'record-id', `ID ${String(record.id).padStart(2, '0')}`));
   if (!isUser && record.img?.length) media.append(node('span', 'image-count', `${record.img.length} ${record.img.length === 1 ? 'foto' : 'fotos'}`));
   const body = node('div', 'card-body');
-  body.append(node('h3', 'card-title', name));
+  const title = node('button', 'card-title-button', name);
+  title.type = 'button';
+  title.setAttribute('aria-label', `Ver ficha de ${name}`);
+  title.addEventListener('click', () => openDetail(record));
+  const heading = node('h3', 'card-title');
+  heading.append(title);
+  body.append(heading);
   const info = node('dl', 'card-info');
   const fields = isUser ? [['Usuario', `@${record.username}`]] : [['Edad', `${record.edad} ${record.edad === 1 ? 'año' : 'años'}`], ['Sexo', record.sexo], ['Color', record.color]];
   for (const [label, value] of fields) {
@@ -184,11 +245,32 @@ function usersTable(records) {
   return table;
 }
 
+function updateSpecies() {
+  const select = $('#species-filter');
+  const previous = select.value;
+  const species = [...new Set(state.pets.map(record => record.especie))].sort((a, b) => a.localeCompare(b, 'es'));
+  const all = node('option', '', 'Todas');
+  all.value = '';
+  select.replaceChildren(all, ...species.map(value => {
+    const option = node('option', '', value);
+    option.value = value;
+    return option;
+  }));
+  select.value = species.includes(previous) ? previous : '';
+}
+
 function render() {
   const resource = state.resource;
   const isUser = resource === 'users';
   const term = normalized($('#search').value.trim());
-  const records = state[resource].filter(record => normalized(isUser ? `${record.id} ${record.firstname} ${record.lastname} ${record.username}` : `${record.id} ${record.especie} ${record.color} ${record.edad} ${record.sexo}`).includes(term));
+  const species = isUser ? '' : $('#species-filter').value;
+  const filtered = Boolean(term || species);
+  const records = state[resource].filter(record => (!species || record.especie === species) && normalized(isUser ? `${record.id} ${record.firstname} ${record.lastname} ${record.username}` : `${record.id} ${record.especie} ${record.color} ${record.edad} ${record.sexo}`).includes(term));
+  const order = $('#sort').value;
+  records.sort((a, b) => order === 'name' ? recordName(a, resource).localeCompare(recordName(b, resource), 'es', { sensitivity: 'base' }) || a.id - b.id : order === 'oldest' ? a.id - b.id : b.id - a.id);
+  $('#species-filter-field').hidden = isUser;
+  $('#refresh').classList.toggle('is-loading', state.loading);
+  $('#sync-label').textContent = state.loading ? 'Actualizando registros…' : state.loadError ? 'No se pudo actualizar' : state.lastSync ? `Actualizado a las ${state.lastSync.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}` : 'Sin actualizar';
   for (const kind of ['users', 'pets']) {
     const count = state.loading ? '—' : state[kind].length;
     $(`#${kind}-count`).textContent = count;
@@ -205,13 +287,14 @@ function render() {
   });
   $('#records').setAttribute('aria-busy', String(state.loading));
   $('#records').classList.toggle('users-records', isUser);
-  $('#records').replaceChildren(...(state.loading || !records.length ? [] : isUser ? [usersTable(records)] : records.map(card)));
+  $('#records').replaceChildren(...(state.loading ? skeletons() : !records.length ? [] : isUser ? [usersTable(records)] : records.map(card)));
   $('#empty-state').hidden = state.loading || state.loadError || records.length > 0;
-  $('#empty-title').textContent = term ? 'Sin coincidencias.' : isUser ? 'No hay usuarios registrados.' : 'No hay mascotas registradas.';
-  $('#empty-description').textContent = term ? 'Prueba otra búsqueda o borra el texto para ver todos los registros.' : isUser ? 'Registra un usuario con su nombre, contraseña y avatar.' : 'Registra una mascota. Sus datos y fotos aparecerán aquí.';
-  $('#empty-add').hidden = Boolean(term);
+  $('#empty-title').textContent = filtered ? 'No encontramos coincidencias' : isUser ? 'Aún no hay usuarios' : 'Aún no hay mascotas';
+  $('#empty-description').textContent = filtered ? 'Cambia la búsqueda o limpia los filtros para ver todos los registros.' : isUser ? 'Registra un usuario con su nombre, contraseña y avatar.' : 'Registra la primera mascota para guardar sus datos y fotografías.';
+  $('#empty-add').hidden = filtered;
+  $('#reset-filters').hidden = !filtered;
   $('#empty-add').replaceChildren(document.createTextNode(`Registrar ${isUser ? 'el primer usuario' : 'la primera mascota'}`), icon('arrow'));
-  $('#results-label').textContent = state.loading ? 'Cargando registros…' : state.loadError ? 'No se pudo actualizar el directorio.' : `${records.length} ${isUser ? (records.length === 1 ? 'usuario' : 'usuarios') : (records.length === 1 ? 'mascota' : 'mascotas')}${term ? ' en esta búsqueda' : ' en tu directorio'}`;
+  $('#results-label').textContent = state.loading ? 'Cargando registros…' : state.loadError ? 'No se pudo actualizar el directorio.' : `${records.length} ${isUser ? (records.length === 1 ? 'usuario' : 'usuarios') : (records.length === 1 ? 'mascota' : 'mascotas')}${filtered ? ` de ${state[resource].length} registros` : ' en el directorio'}`;
 }
 
 function revokePreviews() {
@@ -242,6 +325,7 @@ function renderPreview() {
     }
   }
   $('#image-preview').replaceChildren(...images);
+  if (files.length) images.forEach((image, i) => animate(image, [{ opacity: 0, transform: 'scale(.93)' }, { opacity: 1, transform: 'scale(1)' }], { delay: i * 25, duration: 170 }));
   $('#preview-caption').hidden = !images.length;
   $('#preview-caption').textContent = files.length ? 'Vista previa de los archivos seleccionados.' : 'Imágenes guardadas actualmente.';
 }
@@ -270,12 +354,14 @@ function openForm(record = null) {
   $('#password-label').textContent = record ? 'Nueva contraseña' : 'Contraseña *';
   $('#password-hint').textContent = record ? 'Déjala vacía para conservar la contraseña actual.' : 'Se guardará de forma segura.';
   renderPreview();
-  dialog.showModal();
+  openModal(dialog);
   form.querySelector(isUser ? '[name=firstname]' : '[name=especie]').focus();
 }
 
 function setFormBusy(busy) {
   state.busy = busy;
+  form.setAttribute('aria-busy', String(busy));
+  $('#save-record').setAttribute('aria-busy', String(busy));
   // Disable only active controls, preserving the inactive form section.
   if (busy) {
     dialog.querySelectorAll('input:not(:disabled),select:not(:disabled),button:not(:disabled)').forEach(element => { element.dataset.busyDisabled = 'true'; element.disabled = true; });
@@ -303,12 +389,14 @@ form.addEventListener('submit', async event => {
   setFormBusy(true);
   try {
     const saved = await api(`/api/${resource}${editingId ? `/${editingId}` : ''}`, { method: editingId ? 'PUT' : 'POST', body });
+    state.lastSync = new Date();
     if (editingId) state[resource] = state[resource].map(record => record.id === editingId ? saved : record);
     else state[resource].push(saved);
     $('#search').value = '';
-    setFormBusy(false);
-    dialog.close();
+    await closeModal(dialog);
+    updateSpecies();
     render();
+    revealRecords();
     notify(`${isUser ? 'Usuario' : 'Mascota'} ${editingId ? (isUser ? 'actualizado' : 'actualizada') : (isUser ? 'creado' : 'creada')} correctamente.`);
   } catch (error) { showError('#form-error', error.message); }
   finally { setFormBusy(false); }
@@ -318,7 +406,7 @@ function openDelete(record) {
   state.deleting = record;
   showError('#delete-error', '');
   $('#delete-description').textContent = `Se eliminará «${recordName(record, state.resource)}» (ID ${record.id}), junto con sus imágenes. Esta acción no se puede deshacer.`;
-  deleteDialog.showModal();
+  openModal(deleteDialog);
   $('#cancel-delete').focus();
 }
 
@@ -333,9 +421,12 @@ $('#confirm-delete').addEventListener('click', async () => {
   showError('#delete-error', '');
   try {
     await api(`/api/${resource}/${id}`, { method: 'DELETE' });
+    state.lastSync = new Date();
     state[resource] = state[resource].filter(record => record.id !== id);
-    deleteDialog.close();
+    await closeModal(deleteDialog);
+    updateSpecies();
     render();
+    revealRecords();
     notify('Registro eliminado correctamente.');
   } catch (error) { showError('#delete-error', error.message); }
   finally {
@@ -371,30 +462,46 @@ function openDetail(record) {
     row.append(node('dt', '', label), node('dd', '', value));
     return row;
   }));
-  detailDialog.showModal();
+  openModal(detailDialog);
 }
 
 document.querySelectorAll('[data-resource]').forEach(button => button.addEventListener('click', () => {
+  if (state.resource === button.dataset.resource) return;
   state.resource = button.dataset.resource;
   $('#search').value = '';
   render();
+  revealRecords();
+  animate($('#collection-title'), [{ opacity: 0, transform: 'translateY(5px)' }, { opacity: 1, transform: 'none' }]);
 }));
 $('#search').addEventListener('input', render);
 $('#refresh').addEventListener('click', load);
 $('#add-record').addEventListener('click', () => openForm());
 $('#empty-add').addEventListener('click', () => openForm());
-document.querySelectorAll('.close-dialog').forEach(button => button.addEventListener('click', () => { if (!state.busy) dialog.close(); }));
+document.querySelectorAll('.close-dialog').forEach(button => button.addEventListener('click', () => { if (!state.busy) void closeModal(dialog); }));
 dialog.addEventListener('close', () => { revokePreviews(); state.editing = null; form.reset(); });
 form.elements.namedItem('avatar').addEventListener('change', renderPreview);
 form.elements.namedItem('img').addEventListener('change', renderPreview);
-$('#cancel-delete').addEventListener('click', () => deleteDialog.close());
+$('#cancel-delete').addEventListener('click', () => { if (!state.busy) void closeModal(deleteDialog); });
 deleteDialog.addEventListener('close', () => { state.deleting = null; });
-for (const modal of [dialog, deleteDialog]) modal.addEventListener('cancel', event => { if (state.busy) event.preventDefault(); });
-$('#close-detail').addEventListener('click', () => detailDialog.close());
-$('#edit-from-detail').addEventListener('click', () => {
+for (const modal of [dialog, deleteDialog, detailDialog]) modal.addEventListener('cancel', event => {
+  event.preventDefault();
+  if (!state.busy) void closeModal(modal);
+});
+$('#close-detail').addEventListener('click', () => { void closeModal(detailDialog); });
+$('#edit-from-detail').addEventListener('click', async () => {
   const record = state.detail;
-  detailDialog.close();
+  await closeModal(detailDialog);
   openForm(record);
 });
 detailDialog.addEventListener('close', () => { state.detail = null; });
+$('#sort').addEventListener('change', () => { render(); revealRecords(); });
+$('#species-filter').addEventListener('change', () => { render(); revealRecords(); });
+$('#reset-filters').addEventListener('click', () => {
+  $('#search').value = '';
+  $('#species-filter').value = '';
+  render();
+  revealRecords();
+  $('#search').focus();
+});
+$('#close-toast').addEventListener('click', () => { clearTimeout(toastTimer); $('#toast').hidden = true; });
 load();

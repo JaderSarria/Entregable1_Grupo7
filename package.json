@@ -8,7 +8,8 @@
   "scripts": {
     "start": "node src/app.js",
     "test": "node --test test/api.test.js",
-    "test:in-process": "node test/run-in-process.cjs"
+    "test:in-process": "node test/run-in-process.cjs",
+    "test:ui": "node test/browser/ui.e2e.cjs"
   },
   "dependencies": {
     "express": "4.21.2",

@@ -26,6 +26,8 @@ Abrir **http://localhost:8080** para usar la interfaz gráfica. Se puede definir
 
 La pantalla se comunica con la API mediante peticiones HTTP reales y formularios multipart. Los datos se guardan en los JSON del servidor. Incluye vistas vacías, validaciones, vistas previas, avisos de guardado, mensajes de error y diseño adaptable a móviles. No depende de fuentes, imágenes o servicios externos.
 
+La versión actual incorpora filtro de mascotas por especie, ordenación por antigüedad o alfabética, transiciones al cambiar de sección, entrada escalonada de fichas, apertura y cierre animados de formularios, indicadores de carga y avisos que se pueden cerrar. Las preferencias de movimiento reducido del dispositivo se respetan tanto en CSS como en JavaScript. Las referencias y decisiones están en `DISENO.md`.
+
 **Si usaste el ZIP anterior:** extraer esta versión en una carpeta nueva, detener el servidor anterior con Ctrl+C y ejecutar `npm ci` y `npm start` en la nueva carpeta. Para conservar registros existentes, copiar antes `src/data/users.json`, `src/data/pets.json` y las carpetas `public/img/users` y `public/img/pets` del proyecto anterior al nuevo. No abrir `index.html` con doble clic: acceder siempre mediante la URL del servidor. Si el navegador conserva la versión anterior, recargar con Ctrl+F5.
 
 ## Estructura
@@ -49,6 +51,7 @@ src/data/pets.json
 test/api.test.js
 test/helpers/in-process.cjs
 test/run-in-process.cjs
+test/browser/ui.e2e.cjs
 package.json
 package-lock.json
 README.md
@@ -109,7 +112,19 @@ Las pruebas levantan un servidor HTTP real en un puerto disponible y usan direct
 
 También comprueban que `/` entregue la interfaz y que sus archivos HTML, CSS, JavaScript e icono estén disponibles. Si el entorno no permite conexiones locales, `npm run test:in-process` ejecuta las mismas comprobaciones directamente contra Express sin abrir puertos. Esta alternativa verifica rutas y formularios multipart, pero no reemplaza una revisión visual del navegador.
 
-En esta versión se superaron 42 comprobaciones con `npm run test:in-process` en Node.js 24. La revisión visual del navegador y la repetición de pruebas por red local no pudieron completarse por restricciones del entorno de ejecución. Para elegir un directorio temporal de pruebas alternativo, configurar `TEST_TMP_DIR`; los datos de prueba se crean en una subcarpeta única y se eliminan al finalizar.
+En esta versión se superaron 42 comprobaciones con `npm test` mediante HTTP real en Node.js 24 y 19 comprobaciones de frontend en Chromium, en escritorio y móvil. También se revisaron capturas de pantalla. Para elegir un directorio temporal de pruebas alternativo, configurar `TEST_TMP_DIR`; los datos de prueba se crean en una subcarpeta única y se eliminan al finalizar.
+
+### Pruebas opcionales del navegador
+
+La aplicación funciona sin Playwright. Para reproducir las pruebas del frontend se puede instalar solo como herramienta local de pruebas, sin cambiar las dependencias de la entrega:
+
+```sh
+npm install --no-save --package-lock=false playwright
+npx playwright install chromium --only-shell
+npm run test:ui
+```
+
+El archivo `test/browser/ui.e2e.cjs` inicia su propio servidor y prueba altas y edición, cargas con vista previa, filtros, ordenación, detalle a edición, cancelación y confirmación de borrado, Escape, ausencia de desbordamiento móvil y movimiento reducido. Los registros e imágenes del proyecto se conservan. Se puede definir `TEST_TMP_DIR` para el directorio temporal y `UI_SCREENSHOT_DIR` para guardar capturas; `PLAYWRIGHT_MODULE` permite usar una instalación externa de Playwright.
 
 ## Persistencia y alcance
 
