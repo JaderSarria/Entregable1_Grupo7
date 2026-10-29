@@ -219,6 +219,31 @@ function actionButton(label, iconName, className, callback) {
   return button;
 }
 
+// Reference assets decorate records without pretending to be uploaded photos.
+function referenceImage(species) {
+  const key = normalized(species).trim();
+  const source = /^(perro|perra|canino|dog)$/.test(key) ? 'perro' : /^(gato|gata|felino|cat)$/.test(key) ? 'gato' : /^(conejo|coneja|rabbit)$/.test(key) ? 'conejo' : null;
+  if (!source) return null;
+  const image = node('img', 'reference-image');
+  image.src = `/assets/${source}.webp`;
+  image.alt = `Imagen de referencia de ${source}; este registro no tiene foto propia`;
+  image.loading = 'lazy';
+  image.decoding = 'async';
+  image.addEventListener('load', () => image.classList.add('is-loaded'), { once: true });
+  image.addEventListener('error', () => {
+    const media = image.parentElement;
+    image.remove();
+    const placeholder = node('div', 'photo-placeholder');
+    placeholder.append(icon('camera'), node('span', '', 'Sin fotografía propia'));
+    if (media?.isConnected) {
+      media.classList.remove('is-reference');
+      media.querySelector('.reference-label')?.remove();
+      media.prepend(placeholder);
+    }
+  }, { once: true });
+  return image;
+}
+
 function card(record) {
   const resource = state.resource;
   const isUser = resource === 'users';
@@ -230,9 +255,17 @@ function card(record) {
   if (image) media.append(image);
   else if (isUser) media.append(node('span', 'initials', `${record.firstname.slice(0, 1)}${record.lastname.slice(0, 1)}`.toUpperCase()));
   else {
-    const placeholder = node('div', 'photo-placeholder');
-    placeholder.append(icon('camera'), node('span', '', 'Sin fotografía'));
-    media.append(placeholder);
+    const reference = referenceImage(record.especie);
+    if (reference) {
+      media.classList.add('is-reference');
+      const label = node('span', 'reference-label', 'Imagen de referencia');
+      label.title = 'Este registro aún no tiene fotografías propias. Puedes añadirlas desde Editar.';
+      media.append(reference, label);
+    } else {
+      const placeholder = node('div', 'photo-placeholder');
+      placeholder.append(icon('camera'), node('span', '', 'Sin fotografía propia'));
+      media.append(placeholder);
+    }
   }
   media.append(node('span', 'record-id', `ID ${String(record.id).padStart(2, '0')}`));
   if (!isUser && record.img?.length) media.append(node('span', 'image-count', `${record.img.length} ${record.img.length === 1 ? 'foto' : 'fotos'}`));
@@ -243,7 +276,7 @@ function card(record) {
   title.addEventListener('click', () => openDetail(record));
   const heading = node('h3', 'card-title');
   heading.append(title);
-  body.append(heading);
+  body.append(node('p', 'card-eyebrow', 'FICHA DE MASCOTA'), heading);
   const info = node('dl', 'card-info');
   const fields = isUser ? [['Usuario', `@${record.username}`]] : [['Edad', `${record.edad} ${record.edad === 1 ? 'año' : 'años'}`], ['Sexo', record.sexo], ['Color', record.color]];
   for (const [label, value] of fields) {
@@ -336,6 +369,15 @@ function render() {
   for (const kind of ['users', 'pets']) {
     const count = state.loading ? '—' : state[kind].length;
     $(`#${kind}-count`).textContent = count;
+  }
+  const totals = { pets: state.pets.length, users: state.users.length, photos: state.pets.reduce((sum, pet) => sum + (pet.img?.length || 0), 0) + state.users.filter(user => Boolean(user.avatar)).length };
+  for (const [kind, value] of Object.entries(totals)) {
+    const stat = $(`#stat-${kind}`);
+    const next = state.loading ? '—' : String(value);
+    if (stat.textContent !== next) {
+      stat.textContent = next;
+      if (!state.loading) animate(stat, [{ opacity: .3, translate: '0 7px' }, { opacity: 1, translate: '0 0' }], { duration: 300 });
+    }
   }
   $('#collection-title').textContent = isUser ? 'Usuarios' : 'Mascotas';
   $('#collection-description').textContent = isUser ? 'Datos de acceso y perfiles registrados.' : 'Especie, edad, sexo y fotografías.';
@@ -511,6 +553,7 @@ function openDetail(record) {
   $('#detail-eyebrow').textContent = `${isUser ? 'USUARIO' : 'MASCOTA'} · ID ${record.id}`;
   const gallery = $('#detail-gallery');
   gallery.replaceChildren();
+  $('#detail-photo-note')?.remove();
   for (const url of (isUser ? [record.avatar] : record.img) || []) {
     const image = imageElement(url, `Fotografía de ${name}`);
     if (!image) continue;
@@ -521,6 +564,11 @@ function openDetail(record) {
     link.title = 'Abrir imagen completa';
     link.append(image);
     gallery.append(link);
+  }
+  if (!isUser && !record.img?.length) {
+    const note = node('p', 'detail-photo-note', 'Esta ficha aún no tiene fotografías propias. Puedes añadirlas desde Editar información.');
+    note.id = 'detail-photo-note';
+    gallery.after(note);
   }
   const fields = isUser ? [['Nombre', record.firstname], ['Apellido', record.lastname], ['Usuario', `@${record.username}`]] : [['Especie', record.especie], ['Color', record.color], ['Edad', `${record.edad} ${record.edad === 1 ? 'año' : 'años'}`], ['Sexo', record.sexo], ['Fotografías', record.img.length]];
   $('#detail-fields').replaceChildren(...fields.map(([label, value]) => {
@@ -574,4 +622,6 @@ $('#reset-filters').addEventListener('click', () => {
 $('#close-toast').addEventListener('click', () => { void dismissToast(); });
 animate($('.masthead-inner'), [{ opacity: 0, translate: '0 -12px' }, { opacity: 1, translate: '0 0' }], { duration: 440 });
 animate($('.resource-nav'), [{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { duration: 420, delay: 70 });
+animate($('.welcome-content'), [{ opacity: 0, translate: '0 20px' }, { opacity: 1, translate: '0 0' }], { duration: 600, delay: 80 });
+animate($('.welcome-photo>img'), [{ opacity: .25, transform: 'scale(1.045)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 800 });
 load();

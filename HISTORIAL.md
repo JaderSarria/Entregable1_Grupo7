@@ -12,7 +12,8 @@ Los archivos JSON de esta copia empiezan vacíos. Los registros y las imágenes 
 6. Aplicar paleta oliva y renovar las fichas.
 7. Agregar filtros, ordenación y diseño adaptable.
 8. Añadir animaciones y transiciones a la interfaz.
+9. Incorporar fotografías, canvas y acabado visual.
 
 ## Horario asignado
 
-Etapa 8: 28 de octubre de 2026, 19:20 (UTC−05:00).
+Etapa 9: 28 de octubre de 2026, 20:30 (UTC−05:00).

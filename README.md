@@ -1,4 +1,4 @@
-# Entregable 1 — API REST de usuarios y mascotas
+# Entregable1_Grupo7 — API REST de usuarios y mascotas
 
 Interfaz sencilla en español, sin marca ni logotipos. Incluye dos secciones: Mascotas y Usuarios.
 
@@ -18,13 +18,15 @@ Abrir **http://localhost:8080** para usar la interfaz gráfica. Se puede definir
 ## Uso de la interfaz gráfica
 
 1. Elegir **Mascotas** o **Usuarios** en el menú.
-2. Pulsar **Añadir mascota** o **Añadir usuario**, completar los campos y, si se desea, seleccionar imágenes. Pulsar **Guardar**.
+2. Pulsar **Registrar mascota** o **Registrar usuario**, completar los campos y, si se desea, seleccionar imágenes. Pulsar **Guardar**.
 3. Las mascotas aparecen en fichas con sus fotos; los usuarios, en una tabla con avatar, nombre y nombre de usuario. La búsqueda permite filtrar por sus datos o ID.
-4. **Abrir ficha** muestra los datos de una mascota. En usuarios, pulsar el nombre abre sus detalles. **Editar** permite modificar información; la papelera pide confirmación antes de eliminar.
+4. **Ver ficha** muestra los datos de una mascota. En usuarios, pulsar el nombre abre sus detalles. **Editar** permite modificar información; la papelera pide confirmación antes de eliminar.
 5. Al editar usuarios, dejar la contraseña vacía conserva la actual. Un avatar nuevo reemplaza el anterior.
 6. Al editar mascotas, elegir entre conservar las fotos y agregar otras o reemplazarlas todas. Reemplazar sin seleccionar fotos permite eliminar las imágenes actuales.
 
 La pantalla se comunica con la API mediante peticiones HTTP reales y formularios multipart. Los datos se guardan en los JSON del servidor. Incluye vistas vacías, validaciones, vistas previas, avisos de guardado, mensajes de error y diseño adaptable a móviles. No depende de fuentes, imágenes o servicios externos.
+
+La cabecera incluye una fotografía editorial y un fondo de contornos dibujado con Canvas 2D, que responde suavemente al puntero y queda estático con movimiento reducido. El resumen muestra el total real de mascotas, usuarios y fotografías guardadas (incluidos los avatares). Los perros, gatos y conejos sin foto propia muestran una **imagen de referencia** identificada; no se guarda como foto del registro y nunca sustituye una fotografía cargada. Las cuatro imágenes están incluidas en `public/assets` en formato WebP y suman menos de 400 KB. Su procedencia y prompts están en `RECURSOS.md`.
 
 La versión actual incorpora filtro de mascotas por especie, ordenación por antigüedad o alfabética, indicador deslizante entre secciones, entrada escalonada de fichas y desplazamiento de estas al reordenar o filtrar. Los formularios se abren con un pequeño rebote, sus campos aparecen por etapas y las fichas tienen una salida animada al eliminarlas. También hay ondas al pulsar botones, transiciones en fotografías y vistas previas, indicadores de carga y avisos con entrada y salida animadas. Las preferencias de movimiento reducido del dispositivo se respetan tanto en CSS como en JavaScript. Las referencias y decisiones están en `DISENO.md`.
 
@@ -37,7 +39,13 @@ public/img/users/.gitkeep
 public/img/pets/.gitkeep
 public/index.html
 public/styles.css
+public/editorial.css
 public/app.js
+public/visuals.js
+public/assets/companeros.webp
+public/assets/perro.webp
+public/assets/gato.webp
+public/assets/conejo.webp
 public/favicon.svg
 src/app.js
 src/middlewares/multer.middleware.js
@@ -112,7 +120,7 @@ Las pruebas levantan un servidor HTTP real en un puerto disponible y usan direct
 
 También comprueban que `/` entregue la interfaz y que sus archivos HTML, CSS, JavaScript e icono estén disponibles. Si el entorno no permite conexiones locales, `npm run test:in-process` ejecuta las mismas comprobaciones directamente contra Express sin abrir puertos. Esta alternativa verifica rutas y formularios multipart, pero no reemplaza una revisión visual del navegador.
 
-En esta versión se superaron 42 comprobaciones con `npm test` mediante HTTP real en Node.js 24 y 21 comprobaciones de frontend en Chromium, en escritorio y móvil. También se revisaron capturas de pantalla. Para elegir un directorio temporal de pruebas alternativo, configurar `TEST_TMP_DIR`; los datos de prueba se crean en una subcarpeta única y se eliminan al finalizar.
+En esta versión se superaron 42 comprobaciones con `npm test` mediante HTTP real en Node.js 24 y 34 comprobaciones de frontend en Chromium, en escritorio y móvil. También se revisaron capturas de pantalla. Para elegir un directorio temporal de pruebas alternativo, configurar `TEST_TMP_DIR`; los datos de prueba se crean en una subcarpeta única y se eliminan al finalizar.
 
 ### Pruebas opcionales del navegador
 
@@ -124,8 +132,12 @@ npx playwright install chromium --only-shell
 npm run test:ui
 ```
 
-El archivo `test/browser/ui.e2e.cjs` inicia su propio servidor y prueba altas y edición, cargas con vista previa, filtros, ordenación, detalle a edición, cancelación y confirmación de borrado, Escape, ausencia de desbordamiento móvil y movimiento reducido. Los registros e imágenes del proyecto se conservan. Se puede definir `TEST_TMP_DIR` para el directorio temporal y `UI_SCREENSHOT_DIR` para guardar capturas; `PLAYWRIGHT_MODULE` permite usar una instalación externa de Playwright.
+El archivo `test/browser/ui.e2e.cjs` inicia su propio servidor y prueba altas y edición, cargas con vista previa, filtros, ordenación animada, detalle a edición, cancelación y confirmación de borrado, Escape, ausencia de desbordamiento a 320, 390 y 768 px y movimiento reducido. También comprueba las fotografías locales, la prioridad de las fotos cargadas frente a las referencias, los contadores reales, el dibujo de canvas y que este permanezca estático con movimiento reducido. No hay solicitudes a servicios externos. Los registros e imágenes del proyecto se conservan. Se puede definir `TEST_TMP_DIR` para el directorio temporal y `UI_SCREENSHOT_DIR` para guardar capturas; `PLAYWRIGHT_MODULE` permite usar una instalación externa de Playwright.
 
 ## Persistencia y alcance
 
 Todas las operaciones propias de archivos usan exclusivamente `node:fs/promises` con async/await. Se serializan las modificaciones por recurso y se escribe primero un archivo temporal, seguido de rename, para evitar actualizaciones perdidas dentro de un proceso. Los JSON comienzan vacíos; los ID son enteros positivos generados como máximo actual + 1. No ejecutar varias instancias escribiendo sobre los mismos JSON. La limpieza de imágenes sucede después de guardar los datos; si esa limpieza falla, la API devuelve 500 aunque el cambio de datos ya se haya guardado. El ejercicio no incluye autenticación ni autorización.
+
+## Repositorio e historial
+
+Repositorio público del Grupo 7: [JaderSarria/Entregable1_Grupo7](https://github.com/JaderSarria/Entregable1_Grupo7). Las etapas del backend y las versiones de la interfaz se organizan en nueve commits. En `HISTORIAL.md` se explica el origen y el orden de estas etapas.
