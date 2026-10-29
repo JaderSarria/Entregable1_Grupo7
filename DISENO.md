@@ -13,11 +13,13 @@ La adaptación visual y el código de la interfaz son propios de este proyecto. 
 
 ## Aplicación
 
-- Navegación segmentada para usuarios y mascotas, con recuentos reales de registros.
+- Navegación segmentada para usuarios y mascotas, con recuentos reales de registros y un indicador que se desliza entre secciones.
 - Fichas con fotografías amplias, campos agrupados, botones con texto y separación entre consulta, edición y borrado.
-- Elevación al pasar el puntero, ampliación leve de la foto y respuesta al pulsar botones. Estos efectos de puntero se limitan a dispositivos que admiten hover.
-- Transiciones de entrada de 170 a 280 ms. Cierre de diálogos de 130 ms. La interfaz permanece operativa sin soporte de Web Animations.
-- Las animaciones de entrada del listado solo se ejecutan al cargar, cambiar de sección, filtrar, ordenar o guardar; no se repiten por cada letra escrita en la búsqueda.
+- Elevación de fichas al pasar el puntero, ampliación de fotografías, giro de iconos y una onda en el punto de pulsación de los botones.
+- Apertura de diálogos con un pequeño rebote de 360 ms y campos que aparecen de forma escalonada. Cierre de 130 ms. La interfaz permanece operativa sin soporte de Web Animations.
+- Entrada escalonada de fichas de 420 ms, con retrasos de hasta 225 ms. Al ordenar o filtrar, las fichas restantes se desplazan desde su posición anterior durante 360 ms; no se repite la entrada completa del listado por cada letra escrita.
+- Salida de la ficha eliminada antes de reorganizar el listado. Galería de detalle y vistas previas con entradas escalonadas; fotografías con una aparición gradual de 400 ms.
+- Avisos con entrada y salida animadas, icono de confirmación y una breve oscilación de los mensajes de error. Las animaciones decorativas terminan: solo los indicadores de carga se repiten mientras se espera una operación.
 - Formularios nativos con foco contenido en el diálogo. Escape cierra con transición; durante el guardado se bloquea el cierre para no interrumpir el resultado.
 - Indicadores de carga, previews de imágenes y notificaciones cerrables. Sin demoras artificiales de red.
 - Filtro por especie, ordenación y acción para limpiar filtros cuando no hay coincidencias.
@@ -25,4 +27,4 @@ La adaptación visual y el código de la interfaz son propios de este proyecto. 
 
 ## Verificación
 
-42 comprobaciones de API y archivos superadas mediante HTTP real; 19 comprobaciones de frontend superadas en Chromium con pantallas de escritorio y móvil. Se verificaron formularios, imágenes, filtros, ordenación, flujo detalle a edición, borrado y su cancelación, Escape, ausencia de desbordamiento horizontal en móvil y movimiento reducido. Se revisaron capturas de escritorio y móvil con datos temporales.
+42 comprobaciones de API y archivos superadas mediante HTTP real; 21 comprobaciones de frontend superadas en Chromium con pantallas de escritorio y móvil. Se verificaron formularios, imágenes, filtros, ordenación y su animación, posición del indicador de navegación, flujo detalle a edición, borrado y su cancelación, Escape, ausencia de desbordamiento horizontal en móvil y movimiento reducido. Se revisaron capturas de escritorio y móvil con datos temporales.

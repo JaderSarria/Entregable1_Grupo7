@@ -62,6 +62,15 @@ const root = path.resolve(__dirname, '../..');
     check(await page.locator('.record-card').count() === 3, 'limpieza de filtros');
     await page.locator('#sort').selectOption('name');
     check((await page.locator('.card-title').allTextContents()).join(',') === 'conejo,gato,perro', 'orden alfabético');
+    // The reverse order must move existing records, rather than only fading a new list.
+    const reordering = await page.evaluate(() => {
+      const sort = document.querySelector('#sort');
+      sort.value = 'oldest';
+      sort.dispatchEvent(new Event('change', { bubbles: true }));
+      return [...document.querySelectorAll('.record-card')].some(card => card.getAnimations().some(animation => animation.effect.getKeyframes().some(frame => frame.transform?.startsWith('translate('))));
+    });
+    check(reordering, 'animación de desplazamiento al reordenar');
+    await page.locator('#sort').selectOption('name');
     await page.getByRole('button', { name: 'Ver ficha de perro', exact: true }).click();
     await page.locator('#detail-dialog').waitFor({ state: 'visible' });
     check(await page.locator('#detail-gallery img').count() === 1, 'galería de detalle');
@@ -78,6 +87,12 @@ const root = path.resolve(__dirname, '../..');
     await page.locator('#delete-dialog').waitFor({ state: 'hidden' });
     check(await page.locator('.record-card').count() === 3, 'cancelar borrado');
     await page.locator('[data-resource=users]').click();
+    await page.waitForFunction(() => {
+      const active = document.querySelector('.nav-item.active').getBoundingClientRect();
+      const marker = document.querySelector('.nav-highlight').getBoundingClientRect();
+      return Math.abs(active.left - marker.left) < 2 && Math.abs(active.width - marker.width) < 2;
+    });
+    check(await page.locator('[data-resource=users]').getAttribute('aria-current') === 'page', 'indicador animado sigue la sección activa');
     await page.locator('#add-record').click();
     await form.locator('[name=firstname]').fill('Ana');
     await form.locator('[name=lastname]').fill('Pérez');
@@ -113,6 +128,7 @@ const root = path.resolve(__dirname, '../..');
     await page.getByRole('button', { name: 'Eliminar ave', exact: true }).click();
     await page.locator('#confirm-delete').click();
     await page.locator('#delete-dialog').waitFor({ state: 'hidden' });
+    await page.waitForFunction(() => document.querySelectorAll('.record-card').length === 3);
     check(await page.locator('.record-card').count() === 3, 'confirmación y borrado real');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.waitForFunction(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches && document.getAnimations().length === 0);

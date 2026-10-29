@@ -11,3 +11,4 @@ Los archivos JSON de esta copia empiezan vacíos. Los registros y las imágenes 
 5. Simplificar navegación y quitar logotipos.
 6. Aplicar paleta oliva y renovar las fichas.
 7. Agregar filtros, ordenación y diseño adaptable.
+8. Añadir animaciones y transiciones a la interfaz.

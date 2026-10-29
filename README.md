@@ -26,7 +26,7 @@ Abrir **http://localhost:8080** para usar la interfaz gráfica. Se puede definir
 
 La pantalla se comunica con la API mediante peticiones HTTP reales y formularios multipart. Los datos se guardan en los JSON del servidor. Incluye vistas vacías, validaciones, vistas previas, avisos de guardado, mensajes de error y diseño adaptable a móviles. No depende de fuentes, imágenes o servicios externos.
 
-La versión actual incorpora filtro de mascotas por especie, ordenación por antigüedad o alfabética, transiciones al cambiar de sección, entrada escalonada de fichas, apertura y cierre animados de formularios, indicadores de carga y avisos que se pueden cerrar. Las preferencias de movimiento reducido del dispositivo se respetan tanto en CSS como en JavaScript. Las referencias y decisiones están en `DISENO.md`.
+La versión actual incorpora filtro de mascotas por especie, ordenación por antigüedad o alfabética, indicador deslizante entre secciones, entrada escalonada de fichas y desplazamiento de estas al reordenar o filtrar. Los formularios se abren con un pequeño rebote, sus campos aparecen por etapas y las fichas tienen una salida animada al eliminarlas. También hay ondas al pulsar botones, transiciones en fotografías y vistas previas, indicadores de carga y avisos con entrada y salida animadas. Las preferencias de movimiento reducido del dispositivo se respetan tanto en CSS como en JavaScript. Las referencias y decisiones están en `DISENO.md`.
 
 **Si usaste el ZIP anterior:** extraer esta versión en una carpeta nueva, detener el servidor anterior con Ctrl+C y ejecutar `npm ci` y `npm start` en la nueva carpeta. Para conservar registros existentes, copiar antes `src/data/users.json`, `src/data/pets.json` y las carpetas `public/img/users` y `public/img/pets` del proyecto anterior al nuevo. No abrir `index.html` con doble clic: acceder siempre mediante la URL del servidor. Si el navegador conserva la versión anterior, recargar con Ctrl+F5.
 
@@ -112,7 +112,7 @@ Las pruebas levantan un servidor HTTP real en un puerto disponible y usan direct
 
 También comprueban que `/` entregue la interfaz y que sus archivos HTML, CSS, JavaScript e icono estén disponibles. Si el entorno no permite conexiones locales, `npm run test:in-process` ejecuta las mismas comprobaciones directamente contra Express sin abrir puertos. Esta alternativa verifica rutas y formularios multipart, pero no reemplaza una revisión visual del navegador.
 
-En esta versión se superaron 42 comprobaciones con `npm test` mediante HTTP real en Node.js 24 y 19 comprobaciones de frontend en Chromium, en escritorio y móvil. También se revisaron capturas de pantalla. Para elegir un directorio temporal de pruebas alternativo, configurar `TEST_TMP_DIR`; los datos de prueba se crean en una subcarpeta única y se eliminan al finalizar.
+En esta versión se superaron 42 comprobaciones con `npm test` mediante HTTP real en Node.js 24 y 21 comprobaciones de frontend en Chromium, en escritorio y móvil. También se revisaron capturas de pantalla. Para elegir un directorio temporal de pruebas alternativo, configurar `TEST_TMP_DIR`; los datos de prueba se crean en una subcarpeta única y se eliminan al finalizar.
 
 ### Pruebas opcionales del navegador
 
